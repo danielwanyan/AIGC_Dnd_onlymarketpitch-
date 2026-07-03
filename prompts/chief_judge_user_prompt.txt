@@ -1,0 +1,10 @@
+### 用户提示词（User Prompt）
+
+=== 专家 1（Gemini3-Pro）===
+{{LLM_Juror1}}
+
+=== 专家 2（GPT5.4）===
+{{LLM_Juror2}}
+
+=== 专家 3（GPT5.1）===
+{{LLM_Juror3}}

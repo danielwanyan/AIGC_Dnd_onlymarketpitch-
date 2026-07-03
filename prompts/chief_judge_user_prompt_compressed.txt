@@ -1,0 +1,5 @@
+E1: {{LLM_Juror1}}
+E2: {{LLM_Juror2}}
+E3: {{LLM_Juror3}}
+
+TASK: Parse, check data quality, majority vote, output JSON.

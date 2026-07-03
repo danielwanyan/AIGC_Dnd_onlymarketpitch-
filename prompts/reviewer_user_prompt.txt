@@ -1,0 +1,18 @@
+请分析以下视频内容，判断是否为纯营销叫卖：
+
+## 重要提醒
+
+• 仅基于 ASR 和 OCR 进行判断
+• 不得使用 Product_title（客户不可见）
+
+## 外部数据打标
+
+• aigc_video_id: {{aigc_video_id}}
+
+## 视频信息
+
+视频评论：{{Comment}}
+
+语音转录（ASR）：{{ASR}}
+
+画面文字（OCR）：{{OCR}}

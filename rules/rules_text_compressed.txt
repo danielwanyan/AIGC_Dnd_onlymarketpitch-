@@ -1,53 +1,41 @@
-Video Low-Quality Rules v3 (Compressed). Multi-rule sequential decision tree.
+Pure Marketing Pitch Rules v1 (Compressed). ASR + OCR only. EU market.
 
-INPUT: ASR, OCR, Comment, Product_title, Product_category, URL_Frames, Product_image, is_aigc, audio_duplicate_count.
+RULE: MP01 — Pure Marketing Pitch. Video contains only promotional language with zero product information.
 
-TRUST: is_aigc and audio_duplicate_count = external authority. Never override.
+INPUT: ASR, OCR, Comment, aigc_video_id. NEVER use Product_title.
 
-DECISION TREE (sequential, first match wins):
-1. audio_duplicate_count > 30 → LQ01 (Duplicate Audio)
-2. ASR non-empty AND only marketing pitch, no product info → LQ02 (Pure Marketing Pitch)
-3. ASR/OCR has product promotion AND video product ≠ bound product image → LQ03 (IPP/货不对板)
-4. Product info insufficient per category rules → LQ04 (Insufficient Detail)
-5. None hit → OK
+DATA QUALITY CHECK (priority before judgment):
+- ASR garbled/meaningless/fragmented → ERROR: "engineering data pollution", human review
+- ASR language mismatch → ERROR: "engineering data pollution", human review
+- ASR non-human language → ERROR: "engineering data pollution", human review
+- ASR empty + OCR normal → proceed with OCR-only rules
+- Both ASR+OCR empty → no marketing, or mark data missing
+- ASR mixed with non-speech (music lyrics, noise) → flag "ASR data pollution", human review
 
-RULES:
+JUDGMENT:
+- Has marketing/promotional language AND zero product info → HIT (MP01)
+- Has product info (features, specs, usage, materials, ingredients) → NOT hit
+- Has both → NOT hit (product info present)
 
-LQ01 - Duplicate Audio (AIGC + non-AIGC):
-- Trigger: audio_duplicate_count > 30 (same-semantic audio in 30 days)
-- Direct hit, no further checks needed
+MARKETING KEYWORDS (EU languages):
+- Price: "only", "just", "special price", "discount", "sale", "promotion", "limited time", "offer", "€", "$", "£", "buy now", "order now", "shop now", "add to cart", "click cart", "purchase"
+- Scarcity: "limited stock", "last chance", "don't miss", "hurry", "selling fast", "almost gone", "while supplies last"
+- FOMO: "don't regret", "miss out", "once in a lifetime", "exclusive"
+- Free shipping: "free shipping", "free delivery"
+- Bundles: "buy one get one", "free gift", "bonus"
+- Superlatives: "best", "amazing", "incredible", "must-have", "perfect"
 
-LQ02 - Pure Marketing Pitch (AIGC + non-AIGC):
-- Must have BOTH: (a) only marketing/promotional language, (b) zero product feature/function info
-- Marketing keywords: price (XX元, $X), discount (限时, 买一送一), scarcity (库存紧张, 最后X件), free shipping (包邮), FOMO (不买后悔)
-- NOT marketing: actual product features, specs, usage instructions, materials
+NOT MARKETING (product info):
+- Features: "supports ANC", "waterproof", "50-hour battery", "bluetooth 5.3"
+- Specs: "6.7-inch OLED", "5000mAh", "100% cotton", "vitamin C"
+- Usage: "apply after cleansing", "suitable for sports", "daily use"
+- Materials: "stainless steel", "organic", "natural ingredients"
 
-LQ03 - Inconsistent Product Presentation (AIGC + non-AIGC):
-- Compare video frames product vs bound product image
-- Same → OK. Different → hit.
-- Exemptions:
-  1. Blind boxes/jewelry/jade/cards: same L3 category → exempt
-  2. Apparel (tops/bottoms, NOT shoes/hats): same SPU different SKU (color/pattern) → exempt
+AIGC CLASSIFICATION:
+- aigc_video_id has value → AIGC Marketing Pitch
+- aigc_video_id is NULL → Non-AIGC Marketing Pitch
 
-LQ04 - Insufficient Detail (AIGC + non-AIGC):
-- Triggered: (a) no audio, OR (b) audio exists but product intro insufficient
-- Category requirements:
-  Electronics/digital: MUST show product + MUST explain features
-  Skincare (except makeup remover): MUST show product + MUST explain efficacy
-  Health supplements: MUST show product + MUST explain ingredients/efficacy
-  All other categories: show product clearly = OK
-- Electronics: phones, tablets, laptops, game consoles, plug-in appliances, earphones, speakers
-- Skincare: toner, essence/serum, facial cream, eye cream, functional products. EXEMPT: makeup remover
-- Health: vitamins, protein powder, dietary supplements
-- Other: apparel, accessories, home goods, cosmetics (makeup) → visual display only, no verbal needed
-
-EXCEPTIONS (override all rules → OK):
-E1: Makeup Video (GRWM) — host briefly mentions or doesn't mention product, then demonstrates makeup application and results. Shows product + intent to promote.
-E2: Card Unboxing — shows card packs, countdown to opening, audience interaction about teams/characters, actual unboxing. Shows product + promotes upcoming unbox.
-E3: Party Board Game Intro — shows gameplay process.
-
-CONFLICT RESOLUTION:
-- Follow decision tree order strictly
-- First match wins
-- If rule hit, check exceptions → exception applies = OK, no exception = low quality
-- Tag with is_aigc: true = AIGC_低质, false = 非AIGC_低质
+SOURCE CLASSIFICATION:
+- ASR has marketing + OCR empty → ASR-only
+- ASR empty + OCR has marketing → OCR-only
+- Both have marketing → ASR+OCR

@@ -1,0 +1,6 @@
+ASR: {{ASR}}
+OCR: {{OCR}}
+Comment: {{Comment}}
+aigc_video_id: {{aigc_video_id}}
+
+TASK: ASR+OCR only. Check data quality first. Only marketing + no product info = HIT.
