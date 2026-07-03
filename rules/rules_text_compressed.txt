@@ -1,0 +1,53 @@
+Video Low-Quality Rules v3 (Compressed). Multi-rule sequential decision tree.
+
+INPUT: ASR, OCR, Comment, Product_title, Product_category, URL_Frames, Product_image, is_aigc, audio_duplicate_count.
+
+TRUST: is_aigc and audio_duplicate_count = external authority. Never override.
+
+DECISION TREE (sequential, first match wins):
+1. audio_duplicate_count > 30 → LQ01 (Duplicate Audio)
+2. ASR non-empty AND only marketing pitch, no product info → LQ02 (Pure Marketing Pitch)
+3. ASR/OCR has product promotion AND video product ≠ bound product image → LQ03 (IPP/货不对板)
+4. Product info insufficient per category rules → LQ04 (Insufficient Detail)
+5. None hit → OK
+
+RULES:
+
+LQ01 - Duplicate Audio (AIGC + non-AIGC):
+- Trigger: audio_duplicate_count > 30 (same-semantic audio in 30 days)
+- Direct hit, no further checks needed
+
+LQ02 - Pure Marketing Pitch (AIGC + non-AIGC):
+- Must have BOTH: (a) only marketing/promotional language, (b) zero product feature/function info
+- Marketing keywords: price (XX元, $X), discount (限时, 买一送一), scarcity (库存紧张, 最后X件), free shipping (包邮), FOMO (不买后悔)
+- NOT marketing: actual product features, specs, usage instructions, materials
+
+LQ03 - Inconsistent Product Presentation (AIGC + non-AIGC):
+- Compare video frames product vs bound product image
+- Same → OK. Different → hit.
+- Exemptions:
+  1. Blind boxes/jewelry/jade/cards: same L3 category → exempt
+  2. Apparel (tops/bottoms, NOT shoes/hats): same SPU different SKU (color/pattern) → exempt
+
+LQ04 - Insufficient Detail (AIGC + non-AIGC):
+- Triggered: (a) no audio, OR (b) audio exists but product intro insufficient
+- Category requirements:
+  Electronics/digital: MUST show product + MUST explain features
+  Skincare (except makeup remover): MUST show product + MUST explain efficacy
+  Health supplements: MUST show product + MUST explain ingredients/efficacy
+  All other categories: show product clearly = OK
+- Electronics: phones, tablets, laptops, game consoles, plug-in appliances, earphones, speakers
+- Skincare: toner, essence/serum, facial cream, eye cream, functional products. EXEMPT: makeup remover
+- Health: vitamins, protein powder, dietary supplements
+- Other: apparel, accessories, home goods, cosmetics (makeup) → visual display only, no verbal needed
+
+EXCEPTIONS (override all rules → OK):
+E1: Makeup Video (GRWM) — host briefly mentions or doesn't mention product, then demonstrates makeup application and results. Shows product + intent to promote.
+E2: Card Unboxing — shows card packs, countdown to opening, audience interaction about teams/characters, actual unboxing. Shows product + promotes upcoming unbox.
+E3: Party Board Game Intro — shows gameplay process.
+
+CONFLICT RESOLUTION:
+- Follow decision tree order strictly
+- First match wins
+- If rule hit, check exceptions → exception applies = OK, no exception = low quality
+- Tag with is_aigc: true = AIGC_低质, false = 非AIGC_低质
